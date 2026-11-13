@@ -1,0 +1,60 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # YEH NAYI LINE HAI: Zip ko extract karne ke liye
+      - name: Unzip Project Files
+        run: |
+          unzip video-downloader.zip
+          ls -la # Check karne ke liye ke files extract hui ya nahi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # Dhyan rakhein: Agar zip extract hone ke baad 'video-downloader' naam ka folder ban jaye, 
+      # toh aage './frontend' ki jagah './video-downloader/frontend' likhna padega.
+      # Agar zip seedha frontend aur backend bahar nikalta hai, toh yeh sahi hai:
+      
+      - name: Install frontend deps
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build web
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Add Android platform
+        working-directory: ./frontend
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        working-directory: ./frontend
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: ./frontend/android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-downloader-apk
+          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
