@@ -12,11 +12,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # YEH NAYI LINE HAI: Zip ko extract karne ke liye
+      # 1. ZIP EXTRACT KARNE WALA STEP
       - name: Unzip Project Files
         run: |
           unzip video-downloader.zip
-          ls -la # Check karne ke liye ke files extract hui ya nahi
+          echo "--- Extracted Folders ---"
+          ls -la
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -29,32 +30,30 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # Dhyan rakhein: Agar zip extract hone ke baad 'video-downloader' naam ka folder ban jaye, 
-      # toh aage './frontend' ki jagah './video-downloader/frontend' likhna padega.
-      # Agar zip seedha frontend aur backend bahar nikalta hai, toh yeh sahi hai:
-      
+      # Dhyan dein: Zip extract hone ke baad folder "video-downloader" ke andar ho sakta hai
+      # Isliye path mein "video-downloader/" add kiya gaya hai
       - name: Install frontend deps
-        working-directory: ./frontend
+        working-directory: ./video-downloader/frontend
         run: npm install
 
       - name: Build web
-        working-directory: ./frontend
+        working-directory: ./video-downloader/frontend
         run: npm run build
 
       - name: Add Android platform
-        working-directory: ./frontend
+        working-directory: ./video-downloader/frontend
         run: npx cap add android
 
       - name: Sync Capacitor
-        working-directory: ./frontend
+        working-directory: ./video-downloader/frontend
         run: npx cap sync android
 
       - name: Build APK
-        working-directory: ./frontend/android
+        working-directory: ./video-downloader/frontend/android
         run: chmod +x gradlew && ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: video-downloader-apk
-          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+          path: video-downloader/frontend/android/app/build/outputs/apk/debug/app-debug.apk
